@@ -1,0 +1,29 @@
+# Headless Blender for running production scripts in isolation (references/blender-headless.md).
+# Build once:  podman build -t blender-headless:5.2.1 <skill>/assets/blender-container
+# (docker build works the same). The runner adds no network, a read-only root, dropped
+# capabilities, CPU/memory/process limits and explicit read/write mounts at run time; this
+# image only supplies Blender.
+FROM debian:bookworm-slim
+
+# Official Linux build and its published SHA-256 (download.blender.org/release/Blender5.2/blender-5.2.1.sha256).
+ARG BLENDER_VERSION=5.2.1
+ARG BLENDER_SHA256=a31f524fa99a527d3d52b7f5aaa68c34e1a19d5a1c9473f79c5cc610fd5b10e9
+
+# Mesa supplies software OpenGL/EGL for Workbench and EEVEE without a GPU.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
+      libx11-6 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 \
+      libgl1 libegl1 libgl1-mesa-dri libglu1-mesa \
+ && series="${BLENDER_VERSION%.*}" \
+ && curl -fsSL -o /tmp/blender.tar.xz \
+      "https://download.blender.org/release/Blender${series}/blender-${BLENDER_VERSION}-linux-x64.tar.xz" \
+ && echo "${BLENDER_SHA256}  /tmp/blender.tar.xz" | sha256sum -c - \
+ && mkdir /opt/blender \
+ && tar -xJf /tmp/blender.tar.xz -C /opt/blender --strip-components=1 \
+ && rm /tmp/blender.tar.xz \
+ && ln -s /opt/blender/blender /usr/local/bin/blender \
+ && apt-get purge -y curl xz-utils && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 1000 blender
+
+USER blender
+WORKDIR /tmp

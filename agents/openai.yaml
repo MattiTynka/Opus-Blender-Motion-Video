@@ -1,0 +1,4 @@
+interface:
+  display_name: "Opus Blender Motion Video"
+  short_description: "Original Blender scenes and motion with AI finishing"
+  default_prompt: "Use $opus-blender-motion-video to build or animate a rigged character and author a short film's scene, choreography and camera motion directly in Blender, then finish it with my choice of image, video and music models."
